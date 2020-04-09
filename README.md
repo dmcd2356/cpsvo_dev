@@ -21,11 +21,11 @@ The scripts are generally used in the following way:
 
 - At this point, you should be able to run the web browser (Firefox or Chrome) and point it to: https://127.0.0.1/admin to access the Drupal interface. If this is the first time you have run the docker containers or have changed database files since the last time you ran, a Drupal page should be displayed indicating the database needs configuring, so it will first prompt for the language selection and then the database info. Make sure to click on the 'Advanced' selection to open the selections for the MySQL Host location. The settings should be set to the following (as specified in the *docker-compose.yml* file):
 
-  - *Database name:*     vsfs_db
-  - *Database username:* vsfsuser
-  - *Database password:* vsfspass
-  - *Advanced -> Host:*  127.0.0.1
-  - *Advanced -> Port:*  3306
+  - *Database name:*     **vsfs_db**
+  - *Database username:* **vsfsuser**
+  - *Database password:* **vsfspass**
+  - *Advanced -> Host:*  **127.0.0.1**
+  - *Advanced -> Port:*  **3306**
 
 When complete, it will indicate a database is already installed, select view existing database.
 
