@@ -235,14 +235,20 @@ mkdir -p ${DOCKER_DRUPAL_PATH}
 sudo mount --bind ${DRUPAL_SRC} ${DOCKER_DRUPAL_PATH}
 echo "    mounted: ${DRUPAL_SRC}"
 
+# adding some needed directories
+echo "- adding webform amd tmp directories to mounted codebase"
+if [ ! -d ${DOCKER_DRUPAL_PATH}/sites/default/files/webform ]; then
+  mkdir -p ${DOCKER_DRUPAL_PATH}/sites/default/files/webform
+fi
+if [ ! -d ${DOCKER_DRUPAL_PATH}/sites/default/files/tmp ]; then
+  mkdir -p ${DOCKER_DRUPAL_PATH}/sites/default/files/tmp
+fi
+
 # set ownership of the mounted drupal codebase to the www-data group and set the permissions
 echo "- changing ownership and permissions of mounted codebase"
 sudo chgrp -R www-data ${DOCKER_DRUPAL_PATH}
 sudo chmod -R 2770 ${DOCKER_DRUPAL_PATH}
 sudo chmod g-w ${DOCKER_DRUPAL_PATH}/sites/default
-if [ ! -d ${DOCKER_DRUPAL_PATH}/sites/default/files/webform ]; then
-  mkdir -p ${DOCKER_DRUPAL_PATH}/sites/default/files/webform
-fi
 
 # make sure a settings.php file exists in the drupal/sites/default folder
 PHP_SETTINGS="${DOCKER_DRUPAL_PATH}/sites/default/settings.php"
