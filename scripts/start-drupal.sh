@@ -102,6 +102,67 @@ function copy_to_php_share
   cp ${config_file} ${DRUPAL_CONFIG}
 }
 
+# finds the ip address for a given interface
+#
+# $1 = name of interface to find the ip address of
+#
+# returns: $IPADDR = the ip address for the corresponding interface (empty if not found)
+#
+function find_ipaddr
+{
+  # this will get the list of all interfaces with their corresponding settings, including the ip addr
+  IPADDR=""
+  local match=0
+  local iface=""
+  while IFS= read -r line; do
+    local new_iface=0
+    # look for the start of an interface definition
+    if [[ ${line} != " "* ]]; then
+      new_iface=1
+      iface=$(echo ${line} | cut -d" " -f2 | cut -d":" -f1)
+      if [ ${match} -eq 1 ]; then
+        break;
+      fi
+    else
+      # skip all lines until we find the interfcae we're looking for
+      if [ "${iface}" != "$1" ]; then
+        continue
+      fi
+      match=1
+      # remove leading space & trim to 1st 2 fields
+      line="$(echo -e "${line}" | sed -e 's/^[[:space:]]*//' | cut -d " " -f 1,2)"
+      # now skip until we find the line that defines the inet address
+      if [ "${line:0:5}" != "inet " ]; then
+        continue
+      fi
+      IPADDR=$(echo ${line} | cut -d" " -f2 | cut -d"/" -f1)
+      break
+    fi
+  done < <(ip addr)
+}
+
+# find the default interfaces and the ip addresses that go along with them
+function find_network_addr
+{
+  # this will get a list of the names of the default interfaces
+  IPLIST=""
+  COUNT=0
+  local ifclist=$(route | grep default | cut -c 73-)
+  local array=($ifclist)
+  for index in ${!array[@]}; do
+    iface=${array[${index}]}
+    find_ipaddr ${iface}
+    if [[ "${IPADDR}" != "" ]]; then
+      if [ ${COUNT} -eq 0 ]; then
+        IPLIST="    ${IPADDR}  ${iface}"
+      else
+        IPLIST=$(printf "${IPLIST}\n    ${IPADDR}    ${iface}")
+      fi
+      COUNT=$(( COUNT + 1 ))
+    fi
+  done
+}
+
 # path where all development files to use are kept
 # this makes it a requirement to have a development directory and to be running this script from it.
 VALUE=`pwd`
@@ -305,20 +366,15 @@ sudo chgrp -R www-data ${CONFIG_FOLDER}
 sudo chmod -R 770 ${CONFIG_FOLDER}
 
 # show the IP address to tune to
-IPADDR=""
-IPLIST=$(hostname -I)
-array=($IPLIST)
-for index in ${!array[@]}; do
-  ipnext=${array[${index}]}
-  if [[ "${ipnext}" == "129.59."* ]]; then
-    IPADDR=${ipnext}
-  fi
-done
+find_network_addr
 echo "------------------------"
-if [ "${IPADDR}" != "" ]; then
-  echo " IPADDR = ${IPADDR}"
-else
+if [ ${COUNT} -eq 0 ]; then
   echo " IPADDR = 127.0.0.1"
+elif [ ${COUNT} -eq 1 ]; then
+  echo " IPADDR = ${IPLIST}"
+else
+  echo " IPADDR is one of the following:"
+  echo "${IPLIST}"
 fi
 echo "------------------------"
 
