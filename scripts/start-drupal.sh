@@ -46,7 +46,7 @@
 #     - Database name:     vsfs_db
 #     - Database username: vsfsuser
 #     - Database password: vsfspass
-#     - Advanced -> Host:  127.0.0.1   (use IPADDR value if running VM in Bridged adapter mode)
+#     - Advanced -> Host:  IPADDR
 #     - Advanced -> Port:  3306
 #
 #   When complete it will indicate a database is already installed, select view existing database
@@ -190,26 +190,46 @@ while [[ $# -gt 0 ]]; do
       echo "This script starts up a pair of docker containers that make up a portion of"
       echo " a LAMP stack for a Drupal codebase. Following this script's completion, you should"
       echo " then run dbload.sh to load the database into the running instance of MySQL."
+      echo " It is assumed that you have downloaded all the cpsvo_dev project files and are"
+      echo " running this script from the scripts subdirectory of it."
       echo
-      echo "After that you should be able to run Chrome or Firefox set to 127.0.0.1/admin"
-      echo " to view your CPS-VO Drupal sandbox (the database will need to be specified and"
-      echo " there may be some configuring necessary. Also, you should now be able to run"
-      echo " MySQL Workbench and PHPStorm and configure them for viewing and editing the"
-      echo " database and codebase correspondingly."
+      echo "After this script completes you should run dbload.sh to load the database corresponding"
+      echo " to the codebase you are using if you have not loaded a database yet. You should also"
+      echo " run copyimages.sh to copy over any user images you have placed in the images folder"
+      echo " and also clamav_start.sh to startup the ClamAV anti-virus software in the drupal codebase."
+      echo " You can then run Chrome or Firefox set to the location of either the ip address of"
+      echo " the host system or https://127.0.0.1. It will probably complain about the self-signed"
+      echo " certificate, but you can ignore that and tell it you accept the risk and continue."
+      echo " If you loaded a new database, Drupal will indicate you need to initialize the"
+      echo " database to continue. You will need to specify the following settings:"
+      echo
+      echo " - Database name:     vsfs_db"
+      echo " - Database username: vsfsuser"
+      echo " - Database password: vsfspass"
+      echo " - Advanced -> Host:  127.0.0.1 or the IP addr of the host system"
+      echo " - Advanced -> Port:  3306"
+      echo
+      echo "After the database has been setup, Drupal will now display your CPS-VO sandbox."
+      echo " (there may be some additional configuring necessary)."
+      echo
+      echo "At this point you should now also be able to run MySQL Workbench and PHPStorm"
+      echo " and configure them for viewing and editing the database and codebase correspondingly."
+      echo " You can shut down the docker containers when you are done (ctrl-C will exit cleanly"
+      echo " if you are not running in background) and restart them with this same start-drupal.sh"
+      echo " and it will continue where you left off - no re-installing or configuring."
       echo
       echo "The following arguments are optional:"
       echo "  -h  : display this help information"
       echo "  -d  : run the script in the background"
-      echo "  -f <path>  : specify the folder location of the development files (explained below)"
-      echo "               (default = /home/$USER/drupal-dev)"
       echo
-      echo "It assumes the following directory structure exists under the main development folder:"
+      echo "The following directory structure is used under the main development folder:"
       echo "  - scripts  - contains all necessary script files (including this one)"
       echo "  - docker   - contains the Docker files to use (Dockerfile and docker-compose.yml)"
-      echo "  - database - contains the database file to load (must be loaded after this script runs)"
+      echo "  - database - contains the database file to load"
       echo "  - images   - contains the themes and user image files to be copied over (optional)"
       echo "  - src      - contains the php codebase files (will be pulled in from SVN if not found)"
       echo "  - certificate - contains the certificate files for https (will be created if not found)"
+      echo "  - config   - contains the files to be copied to docker container (will be created if not found)"
       exit 0
       ;;
     *)
