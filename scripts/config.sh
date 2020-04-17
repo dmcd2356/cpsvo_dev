@@ -66,12 +66,75 @@ function get_version
 # get the ubuntu version
 UBUNTU_REL=`lsb_release -r | cut -c10-`
 UBUNTU_NAME=`lsb_release -cs`
+
+SHOWONLY=0
+OPTIONAL=0
+ENTRY=()
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case ${key} in
+    -s|--show)
+      SHOWONLY=1
+      shift
+      ;;
+    -a|--all)
+      OPTIONAL=1
+      shift
+      ;;
+    -h|--help)
+      echo "This script installs the programs necessary to run the drupal docker containers and"
+      echo " additional programs used for development. In most cases it attempts to find the latest"
+      echo " version of the program and install it. If the program is already loaded and is the"
+      echo " latest version, it will be skipped. If it is an older version, it will ask if you want"
+      echo " to upgrade. It also allows you to skip the optional development tools."
+      echo
+      echo "After this script completes you should be able to run the start_drupal.sh script."
+      echo
+      echo "The following arguments are optional:"
+      echo "  -h  : display this help information"
+      echo "  -s  : only show current versions installed - do NOT install any software"
+      echo "  -a  : install all optional tools"
+      exit 0
+      ;;
+    *)
+      ENTRY+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [ ${SHOWONLY} -eq 1 ]; then
+  echo "Ubuntu version is ${UBUNTU_REL}  (${UBUNTU_NAME})"
+  get_version "svn" 2
+  get_version "docker" 2
+  get_version "docker-compose" 2
+  get_version "google-chrome" 2
+  get_version "mysql-workbench" 4
+  STATUS=`which phpstorm`
+  if [ "${STATUS}" == "" ]; then
+    echo "PHPStorm not installed"
+  else
+    echo "PHPStorm already installed"
+  fi
+  exit 0
+fi
+
+# make sure ubuntu version is correct
 if [ ${UBUNTU_REL} != "18.04" ]; then
   echo "Your Ubuntu version is ${UBUNTU_REL}"
   echo "This script is meant for 18.04, so there may be issues with some commands."
   read -p "Do you wish to continue? (Y/n): " RESPONSE
   if [ "${RESPONSE}" != "Y" ] && [ "${RESPONSE}" != "y" ]; then
     exit 1
+  fi
+fi
+
+# check if optional programs desired
+if [ ${OPTIONAL} -eq 0 ]; then
+  echo "This can optionally also install PHPStorm, MySQL Workbench, and Chrome browser."
+  read -p "Do you wish to install these? (Y/n): " RESPONSE
+  if [ "${RESPONSE}" != "Y" ] && [ "${RESPONSE}" != "y" ] && [ ${SHOWONLY} -eq 0 ]; then
+    OPTIONAL=1
   fi
 fi
 
@@ -170,7 +233,7 @@ fi
 
 # install Google Chrome
 get_version "google-chrome" 2
-if [ "${VERSION}" == "" ]; then
+if [ "${VERSION}" == "" ] && [ ${OPTIONAL} -eq 1 ]; then
   echo "------------------------------------"
   echo "- installing Google Chrome         -"
   echo "------------------------------------"
@@ -181,7 +244,7 @@ fi
 
 # install MySQL Workbench and configure it for the database
 get_version "mysql-workbench" 4
-if [ "${VERSION}" == "" ]; then
+if [ "${VERSION}" == "" ] && [ ${OPTIONAL} -eq 1 ]; then
   echo "------------------------------------"
   echo "- installing MySQL Workbench       -"
   echo "------------------------------------"
@@ -191,7 +254,7 @@ fi
 # install PHPStorm
 # TODO: don't know how to show PHPStorm version
 STATUS=`which phpstorm`
-if [ "${STATUS}" == "" ]; then
+if [ "${STATUS}" == "" ] && [ ${OPTIONAL} -eq 1 ]; then
   echo "------------------------------------"
   echo "- installing PHPStorm              -"
   echo "------------------------------------"
