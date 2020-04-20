@@ -23,7 +23,7 @@ DRUPAL_DB="${DRUPAL_DEV}/database"
 DB_NAME="vsfs_db"
 
 # base name for file output
-DRUPAL_FILE="vsfs_db"
+DRUPAL_FILE="vsfsdb"
 
 function setup_env
 {
@@ -56,4 +56,4 @@ docker exec ${ENV} drupal_db_1 mysqldump ${LOGIN} ${OPTIONS} ${DB_NAME} ${OUTPUT
 # copy name from docker shared folder to local folder
 #timestamp=$(date +%Y-%m-%d_%H-%M-%S)
 timestamp=$(date +%m-%d)
-cp ${DRUPAL_RUN}/dump/${DRUPAL_FILE}.sql ${DRUPAL_DB}/${DRUPAL_FILE}_${timestamp}.sql
+cp ${DRUPAL_RUN}/dump/${DRUPAL_FILE}.sql ${DRUPAL_DB}/${DRUPAL_FILE}-${timestamp}.sql
