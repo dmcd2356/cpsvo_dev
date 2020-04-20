@@ -19,8 +19,11 @@ fi
 DRUPAL_DEV="${VALUE%/*}"
 DRUPAL_DB="${DRUPAL_DEV}/database"
 
+# name of database
+DB_NAME="vsfs_db"
+
 # base name for file output
-DRUPAL_FILE="vo_db"
+DRUPAL_FILE="vsfs_db"
 
 function setup_env
 {
@@ -43,13 +46,14 @@ function setup_env
 #  ENV+=" -e _=/usr/bin/env"
 }
 
-#EXTRA_OPTS="--comments --dump-date"
-OPTIONS="${EXTRA_OPTS} --default-character-set=utf8 --add-drop-table vsfs_db"
+OPTIONS="--default-character-set=utf8 --add-drop-table"
 LOGIN="-u vsfsuser -pvsfspass"
 OUTPUT="--result-file=/docker-entrypoint-initdb.d/${DRUPAL_FILE}.sql"
 
 # dump current database to shared folder in docker, then place in DRUPAL_DEV location
-docker exec ${ENV} drupal_db_1 mysqldump ${LOGIN} ${OPTIONS} ${OUTPUT}
+docker exec ${ENV} drupal_db_1 mysqldump ${LOGIN} ${OPTIONS} ${DB_NAME} ${OUTPUT}
 
-timestamp=$(date +%Y-%m-%d_%H-%M-%S)
-cp ${DRUPAL_RUN}/dump/${DRUPAL_FILE}.sql ${DRUPAL_DB}/${DRUPAL_FILE}-${timestamp}.sql
+# copy name from docker shared folder to local folder
+#timestamp=$(date +%Y-%m-%d_%H-%M-%S)
+timestamp=$(date +%m-%d)
+cp ${DRUPAL_RUN}/dump/${DRUPAL_FILE}.sql ${DRUPAL_DB}/${DRUPAL_FILE}_${timestamp}.sql
