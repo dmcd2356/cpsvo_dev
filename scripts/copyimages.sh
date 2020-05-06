@@ -62,4 +62,3 @@ DST_PATH="${DRUPAL_RUN}/drupal/sites"
 
 # copy images to the drupal files folder
 copyfiles "users" default/files
-copyfiles "themes-redux" all/themes/redux/images
