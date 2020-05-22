@@ -14,7 +14,11 @@
 
 **dbdump.sh**
 
-  This script dumps the current database into a file (date and time stamped) in the Drupal development path.
+  This script dumps the current database from your sandbox into a file (date stamped) in the Drupal development path.
+
+**dbprod.sh**
+
+  This script dumps the current database from the production VO into a file (date stamped) in the Drupal development path.
 
 **copyimages.sh**
 

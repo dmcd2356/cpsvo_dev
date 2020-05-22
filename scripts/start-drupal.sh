@@ -59,7 +59,30 @@
 #
 #-------------------------------------------------------------------------------------
 #
-# NOTE: You can also run this script in the background by adding a "-d" option to the command.
+# RUNNING THE CONTAINERS IN BACKGROUND:
+#
+# You can also run this script in the background by adding a "-d" option to the command.
+# If you then wish to attach a terminal to it for viewing output you can enter the command:
+#
+#     docker attach <container_name>
+#
+# Where <container_name> is either drupal_www_1 (for the PHP/web server) or drupal_db_1
+#   (for the database container). Note that you can't connect to them both with the same
+#   terminal, and once a terminal is connected the only way to detach without killing the
+#   container is to close the terminal.
+#
+# On the other hand, if you started the containers in normal mode, you can send to run in
+#   the background by entering a ctrl-Z, followed by the command: bg
+#
+#-------------------------------------------------------------------------------------
+#
+# ACCESSING THE RUNNING CONTAINERS:
+#
+# If you need to access the files in the running contaioners, you can do so using the command:
+#
+#     docker exec -it <container_name> bash
+#
+# This will allow you access to the filesystem for either drupal_www_1 or drupal_db_1.
 #
 #-------------------------------------------------------------------------------------
 #
@@ -177,13 +200,13 @@ DRUPAL_DEV="${VALUE%/*}"
 export DRUPAL_RUN
 export DRUPAL_DEV
 
-OPTIONS=""
+BACKGROUND=0
 ENTRY=()
 while [[ $# -gt 0 ]]; do
   key="$1"
   case ${key} in
     -d)
-      OPTIONS="-d"
+      BACKGROUND=1
       shift
       ;;
     -h|--help)
@@ -401,4 +424,10 @@ echo "------------------------"
 # start the docker containers anew
 echo "- starting LAMP docker containers"
 cd ${DRUPAL_RUN}
-docker-compose up ${OPTIONS} --build --abort-on-container-exit 
+if [ ${BACKGROUND} -ne 0 ]; then
+  # run in background
+  docker-compose up -d --build 
+else
+  # run in foreground (abort-on-container-exit prevents 1 container from running if the other failed)
+  docker-compose up --build --abort-on-container-exit 
+fi
