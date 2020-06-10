@@ -5,8 +5,9 @@ services:
           context: ./drupal
           dockerfile: Dockerfile
         ports:
-            - "8000:80"
-            - "443:443"
+            - "8000:80"     # HTTP
+            - "443:443"     # HTTPS
+            - "587:587"     # SMTP (for email)
         volumes:
             - ./drupal:/var/www/html/
         links:
@@ -20,7 +21,7 @@ services:
         command: --default-authentication-plugin=mysql_native_password --max_allowed_packet=33554432
         environment:
             MYSQL_DATABASE: vsfs_db
-            MYSQL_USER: vsfsuser
+            MYSQL_USER:     vsfsuser
             MYSQL_PASSWORD: vsfspass
             MYSQL_ROOT_PASSWORD: root
         volumes:
