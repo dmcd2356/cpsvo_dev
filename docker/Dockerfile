@@ -43,7 +43,6 @@ RUN sed -i '/browscap =/c\browscap = /usr/local/etc/php/extra/browscap.ini' /usr
 RUN echo "[browscap]" > /usr/local/etc/php/conf.d/docker-php-browscap.ini
 RUN echo "browscap = /usr/local/etc/php/extra/browscap.ini" >> /usr/local/etc/php/conf.d/docker-php-browscap.ini
 
-
 # enable the mod_ssl module in apache and configure it for HTTPS
 RUN a2enmod rewrite
 RUN service apache2 restart
@@ -53,27 +52,13 @@ RUN a2enmod ssl
 COPY config/ssl-cert-snakeoil.pem /etc/ssl/certs/
 COPY config/ssl-cert-snakeoil.key /etc/ssl/private/
 
-# sendmail config
-############################################
-
+# SETUP FOR SMTP SERVER FOR GMAIL
+# install ssmtp
 RUN apt-get install -q -y ssmtp mailutils
-
-# root is the person who gets all mail for userids < 1000
-RUN echo "root=dmcd2356@gmail.com" >> /etc/ssmtp/ssmtp.conf
-RUN echo "host=localhost" >> /etc/ssmtp/ssmtp.conf
-
-# Here is the gmail configuration (or change it to your private smtp server)
-RUN echo "mailhub=smtp.gmail.com:587" >> /etc/ssmtp/ssmtp.conf
-RUN echo "AuthUser=cmcd3457@gmail.com" >> /etc/ssmtp/ssmtp.conf
-RUN echo "AuthPass=ihdfpfzhgbdwwbea" >> /etc/ssmtp/ssmtp.conf
-
-RUN echo "UseTLS=YES" >> /etc/ssmtp/ssmtp.conf
-RUN echo "UseSTARTTLS=YES" >> /etc/ssmtp/ssmtp.conf
-RUN echo "FromLineOverride=YES" >> /etc/ssmtp/ssmtp.conf
-
+# copy the SSMTP config file
+COPY config/ssmtp.conf /etc/ssmtp/ssmtp.conf
 # Set up php sendmail config
 RUN echo "sendmail_path=sendmail -i -t" >> /usr/local/etc/php/conf.d/docker-php-sendmail.ini
-############################################
 
 # install the PHP configuration changes file
 # (This doesn't seem to work, so now we just append the file to the /var/www/html/.htaccess file.

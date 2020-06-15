@@ -36,6 +36,10 @@
 
   This will start the ClamAV anti-virus daemon in the drupal_www_1 container. This is used by Drupal and gives a status report warning if it is not running.
 
+**email_config.sh**
+
+  This will configure ssmtp for working with GMail for Drupal mail redirection. The mail redirection currently does not work, but this gets it close.
+
 **clean.sh**
 
   This can do either of 2 things:

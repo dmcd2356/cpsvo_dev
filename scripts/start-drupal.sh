@@ -389,6 +389,11 @@ if [[ -d ${DRUPAL_IMAGES} ]]; then
   ./copyimages.sh
 fi
 
+# if email config file does not exist, create one
+if [[ ! -f ${DRUPAL_CONFIG}/ssmtp.conf ]]; then
+  ./email_config.sh
+fi
+
 # copy certificate and public key info over to mounted docker drupal directory so Dockerfile
 #  has access to copy them to apache config locations.
 # (if certificate info was not found, create a self-signed one)
