@@ -186,6 +186,51 @@ function find_network_addr
   done
 }
 
+# modifies the settings.php file for setting the database access and additional
+# options the user defines in the 'override-settings.php' file.
+#
+# $1 = the settings.php file to change
+#
+function modify_settings_php
+{
+  php_file=$1
+  
+  # modify the url of the database to indicate the actual ipaddress (if known)
+  # (skip if this has already been done)
+  changed=`grep "vsfsuser:vsfspass@${IPADDR}:3306/vsfs_db" ${php_file}`
+  if [ "${changed}" == '' ] && [ ${COUNT} -eq 1 ]; then
+    linenum=`grep -n '$db_url =' ${php_file} | tail -1 | cut -f1 -d:`
+    if [ "${linenum}" == '' ]; then
+      echo "ERROR: db_url setting not found in settings.php"
+      exit 1
+    fi
+    echo "- modifing settings.php ipaddress to: ${IPADDR}"
+    config_data=""'$db_url'" = 'mysqli://vsfsuser:vsfspass@${IPADDR}:3306/vsfs_db';"
+    sed -i "${linenum}s#.*#${config_data}#" ${php_file}
+  fi
+
+  # add in the other drupal settings, if not already done
+  # TODO: this works fine if the table is not currently defined, as it will
+  # define the table and add all of the entries. However, if a table is already
+  # defined, it will not modify it. In this case, it should replace any entry
+  # already defined and add the entries if not defined. This would mean finding
+  # the ending ");" line and limiting our search of entries to this range.
+  changed=`grep '^$conf = array(' ${php_file}`
+  if [ "${changed}" == '' ]; then
+    linenum=`grep -n '^# $conf = array' ${php_file} | cut -f1 -d:`
+    echo "- adding settings.php modifications: line ${linenum}"
+    config_data='$conf = array('
+    sed -i "${linenum}a${config_data}" ${php_file}
+    linenum=$((linenum+1))
+    while read config_data; do
+      sed -i "${linenum}a${config_data}" ${php_file}
+      linenum=$((linenum+1))
+    done < ${DOCKER_PATH}/override-settings.php
+    config_data=' );'
+    sed -i "${linenum}a${config_data}" ${php_file}
+  fi
+}
+
 # path where all development files to use are kept
 # this makes it a requirement to have a development directory and to be running this script from it.
 VALUE=`pwd`
@@ -303,6 +348,19 @@ if [ ! -d ${DRUPAL_SRC} ] || [ ! -f ${DRUPAL_SRC}/index.php ]; then
   ./svncheckout.sh
 fi
 
+# show the IP address to tune to
+find_network_addr
+echo "------------------------"
+if [ ${COUNT} -eq 0 ]; then
+  echo " IPADDR = 127.0.0.1"
+elif [ ${COUNT} -eq 1 ]; then
+  echo " IPADDR = ${IPLIST}"
+else
+  echo " IPADDR is one of the following:"
+  echo "${IPLIST}"
+fi
+echo "------------------------"
+
 # create the drupal development config directory if it doesn't exist to hold all files to be
 #  copied over to the apache/php container shared config directory.
 if [ ! -d ${DRUPAL_CONFIG} ]; then
@@ -354,18 +412,32 @@ sudo chgrp -R www-data ${DOCKER_DRUPAL_PATH}
 sudo chmod -R 2770 ${DOCKER_DRUPAL_PATH}
 sudo chmod g-w ${DOCKER_DRUPAL_PATH}/sites/default
 
+# copy the drupal php override settings to the drupal directory
+#echo "- adding override entries to php settings file"
+#AMEND_SETTINGS="localhost-override-settings.php"
+#AMEND_PATH="${DOCKER_DRUPAL_PATH}/sites/default/files/"
+#cp ${DOCKER_PATH}/${AMEND_SETTINGS} ${AMEND_PATH}
+
 # make sure a settings.php file exists in the drupal/sites/default folder
-PHP_SETTINGS="${DOCKER_DRUPAL_PATH}/sites/default/settings.php"
-if [ ! -f ${PHP_SETTINGS} ] && [ -f ${DOCKER_DRUPAL_PATH}/sites/default/default.settings.php ]; then
+PHP_DEFAULT="${DOCKER_DRUPAL_PATH}/sites/default/settings.php"
+PHP_LOCALHOST="${DOCKER_DRUPAL_PATH}/sites/localhost/settings.php"
+DEFAULT_SETTINGS="${DOCKER_DRUPAL_PATH}/sites/default/default.settings.php"
+if [ ! -f ${PHP_DEFAULT} ]; then
+  if [ ! -f ${DEFAULT_SETTINGS} ]; then
+    echo "ERROR: neither settings.php file nor the default file found"
+    exit 1
+  fi
   echo "- creating a default settings.php entry"
-  cp ${DOCKER_DRUPAL_PATH}/sites/default/default.settings.php ${PHP_SETTINGS}
+  cp ${DEFAULT_SETTINGS} ${PHP_DEFAULT}
 fi
-# modify settings.php to remove warning about http request failures
-RESPONSE=`grep drupal_http_request_fails ${PHP_SETTINGS}`
-if [ "${RESPONSE}" == "" ]; then
-  echo "\$conf['drupal_http_request_fails'] = FALSE;" >> ${PHP_SETTINGS}
+
+# modify the default settings.php files
+modify_settings_php ${PHP_DEFAULT}
+sudo chmod g-w ${PHP_DEFAULT}
+if [ -f ${PHP_LOCALHOST} ]; then
+  modify_settings_php ${PHP_LOCALHOST}
+  sudo chmod g-w ${PHP_LOCALHOST}
 fi
-sudo chmod g-w ${PHP_SETTINGS}
 
 # now copy the docker files to the mounted directory
 echo "- copying docker files to mount location"
@@ -389,10 +461,11 @@ if [[ -d ${DRUPAL_IMAGES} ]]; then
   ./copyimages.sh
 fi
 
+# TODO: GMail server does not function yet, so disable this.
 # if email config file does not exist, create one
-if [[ ! -f ${DRUPAL_CONFIG}/ssmtp.conf ]]; then
-  ./email_config.sh
-fi
+#if [[ ! -f ${DRUPAL_CONFIG}/ssmtp.conf ]]; then
+#  ./email_config.sh
+#fi
 
 # copy certificate and public key info over to mounted docker drupal directory so Dockerfile
 #  has access to copy them to apache config locations.
@@ -412,19 +485,6 @@ mkdir -p ${CONFIG_FOLDER}
 cp ${DRUPAL_CONFIG}/* ${CONFIG_FOLDER}
 sudo chgrp -R www-data ${CONFIG_FOLDER}
 sudo chmod -R 770 ${CONFIG_FOLDER}
-
-# show the IP address to tune to
-find_network_addr
-echo "------------------------"
-if [ ${COUNT} -eq 0 ]; then
-  echo " IPADDR = 127.0.0.1"
-elif [ ${COUNT} -eq 1 ]; then
-  echo " IPADDR = ${IPLIST}"
-else
-  echo " IPADDR is one of the following:"
-  echo "${IPLIST}"
-fi
-echo "------------------------"
 
 # start the docker containers anew
 echo "- starting LAMP docker containers"

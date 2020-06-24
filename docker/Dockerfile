@@ -53,12 +53,13 @@ COPY config/ssl-cert-snakeoil.pem /etc/ssl/certs/
 COPY config/ssl-cert-snakeoil.key /etc/ssl/private/
 
 # SETUP FOR SMTP SERVER FOR GMAIL
+# TODO: this currently doesn't work, so it is disabled
 # install ssmtp
-RUN apt-get install -q -y ssmtp mailutils
+#RUN apt-get install -q -y ssmtp mailutils
 # copy the SSMTP config file
-COPY config/ssmtp.conf /etc/ssmtp/ssmtp.conf
+#COPY config/ssmtp.conf /etc/ssmtp/ssmtp.conf
 # Set up php sendmail config
-RUN echo "sendmail_path=sendmail -i -t" >> /usr/local/etc/php/conf.d/docker-php-sendmail.ini
+#RUN echo "sendmail_path=sendmail -i -t" >> /usr/local/etc/php/conf.d/docker-php-sendmail.ini
 
 # install the PHP configuration changes file
 # (This doesn't seem to work, so now we just append the file to the /var/www/html/.htaccess file.

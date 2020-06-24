@@ -32,6 +32,11 @@ if [ ! -f ~/.ssh/config ]; then
   exit 1
 fi
 
+# since some commands may need sudo access, let's get the user password out of the way,
+# otherwise if it prompts for the cpsvo server password as well later, the user may
+# get confused over what password to enter.
+sudo echo
+
 echo "This will download the database contents of the current production CPS-VO image"
 echo " into your drupal development's database directory."
 read -p "Do you wish to proceed? (Y/n): " SELECT
@@ -41,7 +46,7 @@ if [ "${SELECT}" != "Y" ] && [ "${SELECT}" != "y" ]; then
 fi
 
 echo "- generating zipped dump of production database"
-echo "  (you will be prompted for your login password)"
+echo "  (you may be prompted for your password for logging into the CPS-VO server)"
 ssh dev sudo -S copydb.sh
 
 echo "- copying vocypher.sql.gz to database folder"
