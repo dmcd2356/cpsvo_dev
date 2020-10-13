@@ -1,3 +1,6 @@
+# NOTE: for switching to PHP 7.4.2, change the next line and the one further down
+# that substitutes 'with-jpeg' for 'jwith-peg-dir' option, which no longer is defined.
+#
 #FROM php:7.4.2-apache
 FROM php:7.0.33-apache
 
@@ -43,6 +46,24 @@ RUN sed -i '/browscap =/c\browscap = /usr/local/etc/php/extra/browscap.ini' /usr
 RUN echo "[browscap]" > /usr/local/etc/php/conf.d/docker-php-browscap.ini
 RUN echo "browscap = /usr/local/etc/php/extra/browscap.ini" >> /usr/local/etc/php/conf.d/docker-php-browscap.ini
 
+############################################
+# SETUP FOR ServerName FOR APACHE (attempt to fix drupal phpmailer problems)
+# TODO: this currently doesn't work, so it is disabled
+#
+# ARG IPADDR=172.18.0.3
+# ARG FILENAME=/etc/apache2/apache2.conf
+#
+# RUN echo "" >> ${FILENAME}
+# RUN echo "# setting ServerName to address and port of this server" >> ${FILENAME}
+# RUN echo "UseCanonicalName on" >> ${FILENAME}
+# RUN echo "ServerName ${IPADDR}:587" >> ${FILENAME}
+#
+# RUN export IPADDR=$(hostname -I);echo "ServerName ${IPADDR}:587" >> ${FILENAME}
+# the above gives 172.17.0.2 even though running 'hostname -I' in docker
+# container gives 172.18.0.3 once the container has finished starting.
+# I believe the correct value is the second one.
+############################################
+
 # enable the mod_ssl module in apache and configure it for HTTPS
 RUN a2enmod rewrite
 RUN service apache2 restart
@@ -52,18 +73,22 @@ RUN a2enmod ssl
 COPY config/ssl-cert-snakeoil.pem /etc/ssl/certs/
 COPY config/ssl-cert-snakeoil.key /etc/ssl/private/
 
+############################################
 # SETUP FOR SMTP SERVER FOR GMAIL
 # TODO: this currently doesn't work, so it is disabled
+#
 # install ssmtp
 #RUN apt-get install -q -y ssmtp mailutils
 # copy the SSMTP config file
 #COPY config/ssmtp.conf /etc/ssmtp/ssmtp.conf
 # Set up php sendmail config
 #RUN echo "sendmail_path=sendmail -i -t" >> /usr/local/etc/php/conf.d/docker-php-sendmail.ini
+############################################
 
 # install the PHP configuration changes file
-# (This doesn't seem to work, so now we just append the file to the /var/www/html/.htaccess file.
-#  This is performed in start-drupal.sh)
+# TODO: this currently doesn't work, so it is disabled
+#       for now we just append the file to the /var/www/html/.htaccess file.
+#       This is performed in start-drupal.sh)
 #COPY config/zz-app.ini /usr/local/etc/php/conf.d/zz-app.ini
 
 # copy the ClamAV config file to run on port 3310
