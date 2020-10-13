@@ -158,7 +158,7 @@ if [ $? -ne 0 ]; then
 fi
 
 sudo apt update &> /dev/null
-sudo apt install -y curl jq
+sudo apt install -y curl jq net-tools
 
 # install apache and subversion
 get_version "svn" 2

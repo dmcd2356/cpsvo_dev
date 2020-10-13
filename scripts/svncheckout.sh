@@ -16,6 +16,6 @@ if [ ! -d /opt/svn ]; then
 fi
 
 # checkout drupal code from svn and place in the download location
-  echo "- checking out latest codebase from SVN"
-  echo "  (if prompted, enter your username and password for VOCYPHER)"
+echo "- checking out latest codebase from SVN"
+echo "  (if prompted, enter your username and password for VOCYPHER)"
 svn checkout https://svn.isis.vanderbilt.edu/VOCYPHER/trunk/websites/portal/drupal ${DRUPAL_DEV}/src &> /dev/null

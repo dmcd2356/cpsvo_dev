@@ -373,7 +373,9 @@ copy_to_php_share 0 ${DOCKER_PATH}/clamd.conf
 
 # stop any current docker containers running
 cd ${DRUPAL_RUN}
-STATUS=`docker-compose ps | grep ^drupal_ | grep Up`
+if [[ -f docker-compose.yml ]]; then
+  STATUS=`docker-compose ps | grep ^drupal_ | grep Up`
+fi
 if [ "${STATUS}" != "" ]; then
   echo "WARNING: docker images already running"
   read -p "Do you wish to terminate current containers and restart? (Y/n): " RESPONSE
