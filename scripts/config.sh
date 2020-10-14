@@ -35,6 +35,8 @@ RESTART=0
 #
 # $1 = name of program command
 # $2 = the (zero-based) index of the version command response that contains the version number
+# $3 = (optional) 'last' to indicate only use last line of response if more than 1 line output,
+#                 'first' (default) to indicate only use the first line of the response
 #
 # Returns:
 # $VERSION = version number (empty if not installed)
@@ -45,7 +47,11 @@ function get_version
   local INDEX=$2
   VERSION=""
 
-  local STATUS=`${COMMAND} --version 2> /dev/null`
+  if [[ $# -gt 2 ]] && [[ $3 == "last" ]]; then
+    local STATUS=`${COMMAND} --version | tail -1 2> /dev/null`
+  else
+    local STATUS=`${COMMAND} --version | head -1 2> /dev/null`
+  fi
   local ERROR=$?
   #echo "${STATUS}"
   if [ ${ERROR} -ne 0 ]; then
@@ -108,14 +114,16 @@ if [ ${SHOWONLY} -eq 1 ]; then
   get_version "svn" 2
   get_version "docker" 2
   get_version "docker-compose" 2
-  get_version "google-chrome" 2
-  get_version "mysql-workbench" 4
+  get_version "mysql" 2
+  get_version "mysql-workbench" 4 last
+  get_version "php" 1
   STATUS=`which phpstorm`
   if [ "${STATUS}" == "" ]; then
-    echo "PHPStorm not installed"
+    echo "PHPStorm NOT installed"
   else
-    echo "PHPStorm already installed"
+    echo "PHPStorm IS installed"
   fi
+  get_version "google-chrome" 2
   exit 0
 fi
 
@@ -157,8 +165,12 @@ if [ $? -ne 0 ]; then
   fi
 fi
 
+# first there are some tools that will be required for the scripts.
+# these are needed for start_drupal.sh (nettools required for 'route' command)
 sudo apt update &> /dev/null
 sudo apt install -y curl jq net-tools
+# these are needed for mysql workbench
+sudo apt install -y libproj-dev proj-bin
 
 # install apache and subversion
 get_version "svn" 2
@@ -231,6 +243,23 @@ if [ ${INSTALL} -eq 1 ]; then
   sudo chmod +x ${DESTINATION}
 fi
 
+# install mysql
+INSTALL=0
+get_version "mysql" 2
+if [ "${VERSION}" == "" ]; then
+  INSTALL=1
+else
+  # TODO: don't know how to determine the latest version, so just skip if already installed.
+  echo "  mysql already installed. version: ${VERSION}"
+fi
+if [ ${INSTALL} -eq 1 ]; then
+  echo "------------------------------------"
+  echo "- installing mysql-client        -"
+  echo "------------------------------------"
+  sudo apt-get install mysql-client
+fi
+# apt-get install mysql-client
+
 # install Google Chrome
 get_version "google-chrome" 2
 if [ "${VERSION}" == "" ] && [ ${OPTIONAL} -eq 1 ]; then
@@ -243,7 +272,7 @@ if [ "${VERSION}" == "" ] && [ ${OPTIONAL} -eq 1 ]; then
 fi
 
 # install MySQL Workbench and configure it for the database
-get_version "mysql-workbench" 4
+get_version "mysql-workbench" 4 last
 if [ "${VERSION}" == "" ] && [ ${OPTIONAL} -eq 1 ]; then
   echo "------------------------------------"
   echo "- installing MySQL Workbench       -"
@@ -252,7 +281,7 @@ if [ "${VERSION}" == "" ] && [ ${OPTIONAL} -eq 1 ]; then
 fi
 
 # install PHPStorm
-# TODO: don't know how to show PHPStorm version
+# TODO: don't know how to get current installed PHPStorm version
 STATUS=`which phpstorm`
 if [ "${STATUS}" == "" ] && [ ${OPTIONAL} -eq 1 ]; then
   echo "------------------------------------"
